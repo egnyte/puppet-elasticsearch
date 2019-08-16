@@ -1,3 +1,5 @@
+require 'fileutils'
+
 Puppet::Type.type(:elasticsearch_keystore).provide(
   :elasticsearch_keystore
 ) do
@@ -107,9 +109,24 @@ Puppet::Type.type(:elasticsearch_keystore).provide(
       @property_flush[:settings].first.each_pair do |setting, value|
         next unless @property_hash[:settings].nil? \
           or not @property_hash[:settings].include? setting
-        debug(self.class.run_keystore(
-          ['add', '--force', '--stdin', setting], resource[:name], resource[:configdir], value
-        ))
+        if value.is_a?(Hash) and value.key?('file')
+          infile = Tempfile.new('elasticsearch-keystore')
+          infile << value['file']
+          infile.flush
+          FileUtils.chown('elasticsearch', nil, infile.path)
+          begin
+            debug(self.class.run_keystore(
+              ['add-file', '--force', setting, infile.path], resource[:name], resource[:configdir]
+            ))
+          ensure
+            infile.close
+            infile.unlink
+          end
+        else
+          debug(self.class.run_keystore(
+            ['add', '--force', '--stdin', setting], resource[:name], resource[:configdir], value
+          ))
+        end
       end
 
       # Remove properties that are no longer present
