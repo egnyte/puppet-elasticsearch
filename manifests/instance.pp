@@ -282,11 +282,23 @@ define elasticsearch::instance (
           'shield.ssl.keystore.password' => $keystore_password,
         }
       } elsif $security_plugin == 'x-pack' {
-        $tls_config = {
-          'xpack.security.transport.ssl.enabled' => true,
-          'xpack.security.http.ssl.enabled'      => true,
-          'xpack.ssl.keystore.path'              => $_keystore_path,
-          'xpack.ssl.keystore.password'          => $keystore_password,
+        if (versioncmp($elasticsearch::version, '7') >= 0) {
+          $tls_config = {
+            'xpack.security.http.ssl.enabled'                => true,
+            'xpack.security.http.ssl.keystore.path'          => $_keystore_path,
+            'xpack.security.http.ssl.keystore.password'      => $keystore_password,
+            'xpack.security.transport.ssl.enabled'           => true,
+            'xpack.security.transport.ssl.keystore.path'     => $_keystore_path,
+            'xpack.security.transport.ssl.keystore.password' => $keystore_password,
+          }
+        }
+        else {
+          $tls_config = {
+            'xpack.security.transport.ssl.enabled' => true,
+            'xpack.security.http.ssl.enabled'      => true,
+            'xpack.ssl.keystore.path'              => $_keystore_path,
+            'xpack.ssl.keystore.password'          => $keystore_password,
+          }
         }
       }
 
