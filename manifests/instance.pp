@@ -155,6 +155,7 @@ define elasticsearch::instance (
   Optional[Enum['shield', 'x-pack']] $security_plugin               = $elasticsearch::security_plugin,
   Optional[String]                   $service_flags                 = undef,
   Boolean                            $ssl                           = false,
+  String                             $ssl_key_type                  = 'rsa',
   Elasticsearch::Status              $status                        = $elasticsearch::status,
   Optional[String]                   $system_key                    = $elasticsearch::system_key,
 ) {
@@ -313,11 +314,12 @@ define elasticsearch::instance (
 
       # Load node certificate and private key
       java_ks { "elasticsearch_instance_${name}_keystore_node":
-        ensure      => 'latest',
-        certificate => $certificate,
-        private_key => $private_key,
-        target      => $_keystore_path,
-        password    => $keystore_password,
+        ensure           => 'latest',
+        certificate      => $certificate,
+        private_key      => $private_key,
+        target           => $_keystore_path,
+        private_key_type => $ssl_key_type,
+        password         => $keystore_password,
       }
     } else { $tls_config = {} }
 
